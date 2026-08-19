@@ -1,0 +1,43 @@
+name: Build Windows EXE
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build-windows-exe:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build EXE
+        run: |
+          pyinstaller PPTDiffTool_v0_9.spec --clean --noconfirm
+
+      - name: Prepare package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force release
+          Copy-Item dist\PPTDiffTool_v0_9.exe release\PPTDiffTool_v0_9.exe
+          Copy-Item README_Windows.md release\README_Windows.md
+          Copy-Item Windows测试清单.md release\Windows测试清单.md
+          Compress-Archive -Path release\* -DestinationPath PPTDiffTool_v0_9_Windows_EXE.zip -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PPTDiffTool_v0_9_Windows_EXE
+          path: PPTDiffTool_v0_9_Windows_EXE.zip
